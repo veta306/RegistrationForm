@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CloseIcon from "../../assets/cross.png";
 import LockIcon from "../../assets/lock.png";
 import EditIcon from "../../assets/edit.png";
 import RefreshIcon from "../../assets/refresh.png";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 const schema = z.object({
-  dialCode: z.string(),
+  dialCode: z.string().min(1),
   phoneNumber: z
     .string()
     .min(1)
@@ -27,12 +27,30 @@ export default function RegisterForm() {
     trigger,
     formState: { errors },
     getValues,
+    handleSubmit,
+    watch,
   } = useForm({
     resolver: zodResolver(schema),
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [privacyNotification, setPrivacyNotification] = useState(true);
+  const password = watch("password");
+  const [passwordIsGood, setPasswordIsGood] = useState(false);
   const dialCodes = useLoaderData();
+  const navigate = useNavigate();
+  const onSubmit = (data) => {
+    console.log(data);
+    navigate("/profile", {
+      state: {
+        email: data.email,
+        phoneNumber: data.dialCode + data.phoneNumber,
+      },
+    });
+  };
+  useEffect(
+    () => setPasswordIsGood(schema.shape.password.safeParse(password).success),
+    [password]
+  );
   return (
     <div className="w-[456px]">
       <div className="mt-2">
@@ -65,7 +83,7 @@ export default function RegisterForm() {
           <br /> All you need is a phone number and e-mail
         </p>
       </div>
-      <form action="">
+      <form onSubmit={handleSubmit(onSubmit)}>
         {currentStep === 0 && (
           <>
             {privacyNotification && (
@@ -88,16 +106,17 @@ export default function RegisterForm() {
               <div className="mt-8">
                 <select
                   {...register("dialCode")}
-                  className="w-20 mr-4 border-[#B9B9C3] border-b-[1px]"
+                  className="w-20 mr-4 py-2 border-[#B9B9C3] border-b-[1px]"
                   type="text"
                 >
+                  <option></option>
                   {dialCodes.map((code, index) => (
                     <option key={index}>{code}</option>
                   ))}
                 </select>
                 <input
                   {...register("phoneNumber")}
-                  className="border-[#B9B9C3] border-b-[1px]"
+                  className="py-2 px-4 border-[#B9B9C3] border-b-[1px]"
                   type="text"
                 />
                 {errors.phoneNumber?.message && (
@@ -141,7 +160,7 @@ export default function RegisterForm() {
                 <p>Confirmation code</p>
                 <input
                   {...register("confirmationCode")}
-                  className="w-full my-2 h-11 text-lg tracking-widest border-[#B9B9C3] border-b-[1px]"
+                  className="w-full my-2 h-11 py-2 px-4 tracking-widest border-[#B9B9C3] border-b-[1px]"
                   type="text"
                   placeholder=" — — — — "
                 />
@@ -189,7 +208,7 @@ export default function RegisterForm() {
                 <label>Enter your email</label>
                 <input
                   {...register("email")}
-                  className="w-full my-2 h-11 text-base border-[#B9B9C3] border-b-[1px]"
+                  className="w-full mt-2 py-2 px-4 h-11 text-base border-[#B9B9C3] border-b-[1px]"
                   type="email"
                 />
                 {errors.email?.message && (
@@ -200,7 +219,7 @@ export default function RegisterForm() {
                 <label>Set a password</label>
                 <input
                   {...register("password")}
-                  className="w-full my-2 h-11 text-base border-[#B9B9C3] border-b-[1px]"
+                  className="w-full mt-2 h-11 py-2 px-4 text-base border-[#B9B9C3] border-b-[1px]"
                   type="password"
                 />
                 {errors.password?.message && (
@@ -208,12 +227,14 @@ export default function RegisterForm() {
                     {errors.password.message}
                   </p>
                 )}
-                <p className="h-5 text-green-600 text-xs">✓ Good password</p>
+                {passwordIsGood && (
+                  <p className="h-5 text-green-600 text-sm">✓ Good password</p>
+                )}
               </div>
             </div>
             <button
               className="h-12 px-8 bg-[#007AFF] text-white rounded"
-              type="button"
+              type="submit"
               onClick={async () => {
                 const output = await trigger(["email", "password"], {
                   shouldFocus: true,

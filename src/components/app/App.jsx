@@ -3,7 +3,7 @@ import RegisterForm from "../RegisterForm/RegisterForm";
 import ProfileForm from "../ProfileForm/ProfileForm";
 import Cross from "../../assets/Icon.png";
 import Logo from "../../assets/Logo.png";
-import { getDialCodes } from "../../utils/functions";
+import { getAllStates, getDialCodes } from "../../utils/functions";
 
 function App() {
   const router = createBrowserRouter([
@@ -17,6 +17,9 @@ function App() {
     {
       path: "/profile",
       element: <ProfileForm />,
+      loader: async () => {
+        return await getAllStates();
+      },
     },
   ]);
   return (
